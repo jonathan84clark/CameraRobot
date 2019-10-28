@@ -26,22 +26,12 @@ body {font-family: "Lato", sans-serif}
 
   <!-- The Band Section -->
   <div class="w3-container w3-content w3-center w3-padding-64" style="max-width:800px" id="band">
-    <h2 class="w3-wide">Thermostat</h2>
-	<input id="set_temp" type="number" name="quantity" min="40" max="90">
-    <button id="set_btn">Set</button><br><br>
-    <button id="off_btn">Off</button>&nbsp&nbsp
-    <!--<button id="ac_btn">AC</button>&nbsp&nbsp-->
-    <button id="fan_btn">Fan</button>&nbsp&nbsp
-    <!--<button id="heat_btn">Heat</button>&nbsp&nbsp-->
-    <button id="auto_btn">Auto</button><br><br>
-    <input id="temperature" readonly>&nbsp&nbsp<br>
-    <input id="externTemp" readonly>&nbsp&nbsp<br>
-    <input id="externHumid" readonly>&nbsp&nbsp<br>
-    <input id="externWind" readonly>&nbsp&nbsp<br>
-    <input id="autoStatus" readonly>&nbsp&nbsp<br>
-    <input id="acStatus" readonly>&nbsp&nbsp<br>
-    <input id="fanStatus" readonly>&nbsp&nbsp<br>
-    <input id="heatStatus" readonly>&nbsp&nbsp<br>
+    <h2 class="w3-wide">Robot</h2>
+	<button id="forward_btn" style="width: 80px; height: 80px;">Forward</button><br><br>
+    <button id="left_btn" style="width: 80px; height: 80px;">Left</button>&nbsp&nbsp
+    <button id="stop_btn" style="width: 80px; height: 80px;">Stop</button>&nbsp&nbsp
+    <button id="right_btn" style="width: 80px; height: 80px;">Right</button><br><br>
+    <button id="reverse_btn" style="width: 80px; height: 80px;">Reverse</button><br><br>
 
 <!-- End Page Content -->
 </div>
@@ -67,25 +57,15 @@ src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js">
 function pullData() {
    //alert("test")
    $.getJSON("data.js", function(result){
-        $('#set_temp').val(result.target)
-        $('#temperature').val("Temperature: " + result.temperature.toString())
-        $('#externTemp').val("Outside Temp: " + result.weatherTemp.toString())
-        $('#externHumid').val("Outside Humid: " + result.weatherHumid.toString())
-        $('#externWind').val("Wind Speed: " + result.windSpd.toString())
-        $('#autoStatus').val("Auto Status: " + result.autoStatus.toString())
-        $('#acStatus').val("AC Status: " + result.acStatus.toString())
-        $('#fanStatus').val("Fan Status: " + result.fanStatus.toString())
-        $('#heatStatus').val("Heat Status: " + result.heaterStatus.toString())
-        //alert(result.target)
     });
 }
 
 $(document).ready(function(){
-    $("#set_btn").click(function(){
+    $("#forward_btn").click(function(){
 	    var targetTemp = $('#set_temp').val()
         $.post("demo_test_post.asp",
         {
-          target: targetTemp
+          forward: true
         },
         function(data,status){
             //alert("Data: " + data + "\nStatus: " + status);
@@ -94,10 +74,10 @@ $(document).ready(function(){
 });
 
 $(document).ready(function(){
-    $("#off_btn").click(function(){
+    $("#left_btn").mousedown(function(){
         $.post("demo_test_post.asp",
         {
-          off: "toggle"
+          left: true
         },
         function(data,status){
             //alert("Data: " + data + "\nStatus: " + status);
@@ -106,10 +86,23 @@ $(document).ready(function(){
 });
 
 $(document).ready(function(){
-    $("#ac_btn").click(function(){
+    $("#left_btn").mouseup(function(){
         $.post("demo_test_post.asp",
         {
-          ac: "toggle"
+          stopleft: true
+        },
+        function(data,status){
+            //alert("Data: " + data + "\nStatus: " + status);
+        });
+    });
+});
+
+
+$(document).ready(function(){
+    $("#stop_btn").click(function(){
+        $.post("demo_test_post.asp",
+        {
+          stop: true
         },
         function(data,status){
             //alert("Data: " + data + "\nStatus: " + status);
@@ -118,10 +111,10 @@ $(document).ready(function(){
 });
 
 $(document).ready(function(){
-    $("#fan_btn").click(function(){
+    $("#right_btn").mousedown(function(){
         $.post("demo_test_post.asp",
         {
-          fan: "toggle"
+          right: true
         },
         function(data,status){
             //alert("Data: " + data + "\nStatus: " + status);
@@ -130,10 +123,10 @@ $(document).ready(function(){
 });
 
 $(document).ready(function(){
-    $("#heat_btn").click(function(){
+    $("#right_btn").mouseup(function(){
         $.post("demo_test_post.asp",
         {
-          heat: "toggle"
+          stopright: true
         },
         function(data,status){
             //alert("Data: " + data + "\nStatus: " + status);
@@ -142,10 +135,10 @@ $(document).ready(function(){
 });
 
 $(document).ready(function(){
-    $("#auto_btn").click(function(){
+    $("#reverse_btn").click(function(){
         $.post("demo_test_post.asp",
         {
-          auto: "toggle"
+          reverse: true
         },
         function(data,status){
             //alert("Data: " + data + "\nStatus: " + status);
