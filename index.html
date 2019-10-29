@@ -29,9 +29,10 @@ body {font-family: "Lato", sans-serif}
     <h2 class="w3-wide">Robot</h2>
 	<button id="forward_btn" style="width: 80px; height: 80px;">Forward</button><br><br>
     <button id="left_btn" style="width: 80px; height: 80px;">Left</button>&nbsp&nbsp
-    <button id="stop_btn" style="width: 80px; height: 80px;">Stop</button>&nbsp&nbsp
+    <button id="stop_btn" style="width: 80px; height: 80px;">Center</button>&nbsp&nbsp
     <button id="right_btn" style="width: 80px; height: 80px;">Right</button><br><br>
-    <button id="reverse_btn" style="width: 80px; height: 80px;">Reverse</button><br><br>
+    <button id="reverse_btn" style="width: 80px; height: 80px;">Reverse</button><br><br><br><br><br><br>
+    <button id="headlights_btn" style="width: 60px; height: 60px;">Lights</button><br><br>
 
 <!-- End Page Content -->
 </div>
@@ -61,7 +62,20 @@ function pullData() {
 }
 
 $(document).ready(function(){
-    $("#forward_btn").click(function(){
+    $("#headlights_btn").mousedown(function(){
+	    var targetTemp = $('#set_temp').val()
+        $.post("demo_test_post.asp",
+        {
+          toggle_lights: true
+        },
+        function(data,status){
+            //alert("Data: " + data + "\nStatus: " + status);
+        });
+    });
+});
+
+$(document).ready(function(){
+    $("#forward_btn").mousedown(function(){
 	    var targetTemp = $('#set_temp').val()
         $.post("demo_test_post.asp",
         {
@@ -72,6 +86,21 @@ $(document).ready(function(){
         });
     });
 });
+
+
+$(document).ready(function(){
+    $("#forward_btn").mouseup(function(){
+	    var targetTemp = $('#set_temp').val()
+        $.post("demo_test_post.asp",
+        {
+          stopforward: true
+        },
+        function(data,status){
+            //alert("Data: " + data + "\nStatus: " + status);
+        });
+    });
+});
+
 
 $(document).ready(function(){
     $("#left_btn").mousedown(function(){
@@ -102,7 +131,7 @@ $(document).ready(function(){
     $("#stop_btn").click(function(){
         $.post("demo_test_post.asp",
         {
-          stop: true
+          center: true
         },
         function(data,status){
             //alert("Data: " + data + "\nStatus: " + status);
@@ -135,10 +164,22 @@ $(document).ready(function(){
 });
 
 $(document).ready(function(){
-    $("#reverse_btn").click(function(){
+    $("#reverse_btn").mousedown(function(){
         $.post("demo_test_post.asp",
         {
           reverse: true
+        },
+        function(data,status){
+            //alert("Data: " + data + "\nStatus: " + status);
+        });
+    });
+});
+
+$(document).ready(function(){
+    $("#reverse_btn").mouseup(function(){
+        $.post("demo_test_post.asp",
+        {
+          stopreverse: true
         },
         function(data,status){
             //alert("Data: " + data + "\nStatus: " + status);
