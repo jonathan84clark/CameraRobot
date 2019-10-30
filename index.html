@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<title>Clark Thermostat</title>
+<title>Camera Robot</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="style/style.css">
@@ -103,22 +103,10 @@ $(document).ready(function(){
 
 
 $(document).ready(function(){
-    $("#left_btn").mousedown(function(){
+    $("#left_btn").click(function(){
         $.post("demo_test_post.asp",
         {
           left: true
-        },
-        function(data,status){
-            //alert("Data: " + data + "\nStatus: " + status);
-        });
-    });
-});
-
-$(document).ready(function(){
-    $("#left_btn").mouseup(function(){
-        $.post("demo_test_post.asp",
-        {
-          stopleft: true
         },
         function(data,status){
             //alert("Data: " + data + "\nStatus: " + status);
@@ -140,22 +128,10 @@ $(document).ready(function(){
 });
 
 $(document).ready(function(){
-    $("#right_btn").mousedown(function(){
+    $("#right_btn").click(function(){
         $.post("demo_test_post.asp",
         {
           right: true
-        },
-        function(data,status){
-            //alert("Data: " + data + "\nStatus: " + status);
-        });
-    });
-});
-
-$(document).ready(function(){
-    $("#right_btn").mouseup(function(){
-        $.post("demo_test_post.asp",
-        {
-          stopright: true
         },
         function(data,status){
             //alert("Data: " + data + "\nStatus: " + status);
