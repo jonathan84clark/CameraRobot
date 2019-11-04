@@ -152,11 +152,11 @@ class S(BaseHTTPRequestHandler):
             GPIO.output(STEERING_A, GPIO.LOW)
             GPIO.output(STEERING_B, GPIO.LOW)
         elif input == Direction.LEFT:
-            GPIO.output(STEERING_A, GPIO.HIGH)
-            GPIO.output(STEERING_B, GPIO.LOW)
-        elif input == Direction.RIGHT:
             GPIO.output(STEERING_A, GPIO.LOW)
             GPIO.output(STEERING_B, GPIO.HIGH)
+        elif input == Direction.RIGHT:
+            GPIO.output(STEERING_A, GPIO.HIGH)
+            GPIO.output(STEERING_B, GPIO.LOW)
         print("Got movement post: " +  str(input))
 
 def runServer(server_class=HTTPServer, handler_class=S, port=5000):
