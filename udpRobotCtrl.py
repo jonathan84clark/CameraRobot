@@ -109,7 +109,7 @@ class UDPRobotControl:
 
     # Handles recieving UDP timeouts
     def UdpServerThread(self):
-        UDP_IP_ADDRESS = "127.0.0.1"
+        UDP_IP_ADDRESS = "192.168.1.14"
         UDP_PORT_NO = 6789
 
         msg = [0, 0, 0, 0, 0, 0, 0, 0]
@@ -121,6 +121,7 @@ class UDPRobotControl:
             rec_len = serverSock.recv_into(data, 8)
             # Ensure we have a valid control code
             if data[0] == 81 and data[1] == 12:
+                print("Got command")
                 self.last_packet = int(round(time.time() * 1000))
                 if (data[2] == 1):
                     self.change_movement(Direction.FORWARD)
@@ -130,7 +131,7 @@ class UDPRobotControl:
                     self.change_movement(Direction.REVERSE)
                 elif (data[2] == 4):
                     self.change_movement(Direction.STOP)
-                elif (data[2] == 5:
+                elif (data[2] == 5):
                     self.change_movement(Direction.CENTER)
                 elif (data[2] == 6):
                     self.change_movement(Direction.LEFT)
