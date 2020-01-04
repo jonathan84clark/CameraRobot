@@ -17,8 +17,7 @@ FORWARD_A = 2
 FORWARD_B = 3
 STEERING_A = 4
 STEERING_B = 17
-HEADLIGHTS_1 = 27
-HEADLIGHTS_2 = 22
+HEADLIGHTS_1 = 25
 
 # Setup the GPIO pins
 GPIO.setwarnings(False) # Disable unused warnings
@@ -28,15 +27,13 @@ GPIO.setup(FORWARD_B, GPIO.OUT) # Fan Pin
 GPIO.setup(STEERING_A, GPIO.OUT) # AC Pin
 GPIO.setup(STEERING_B, GPIO.OUT) # Main power line
 GPIO.setup(HEADLIGHTS_1, GPIO.OUT) # Main power line
-GPIO.setup(HEADLIGHTS_2, GPIO.OUT) # Main power line
 
 # Clear all relays
 GPIO.output(FORWARD_A, GPIO.LOW)
 GPIO.output(FORWARD_B, GPIO.LOW)
 GPIO.output(STEERING_A, GPIO.LOW)
 GPIO.output(STEERING_B, GPIO.LOW)
-GPIO.output(HEADLIGHTS_1, GPIO.HIGH)
-GPIO.output(HEADLIGHTS_2, GPIO.LOW)
+GPIO.output(HEADLIGHTS_1, GPIO.LOW)
 
 class Direction(Enum):
     FORWARD = 1
@@ -64,12 +61,10 @@ class UDPRobotControl:
 
     def headlights(self):
         if self.headlight_state:
-            GPIO.output(HEADLIGHTS_1, GPIO.HIGH)
-            GPIO.output(HEADLIGHTS_2, GPIO.LOW)
+            GPIO.output(HEADLIGHTS_1, GPIO.LOW)
             self.headlight_state = False
         else:
-            GPIO.output(HEADLIGHTS_1, GPIO.LOW)
-            GPIO.output(HEADLIGHTS_2, GPIO.HIGH)
+            GPIO.output(HEADLIGHTS_1, GPIO.HIGH)
             self.headlight_state = True
 
     def change_movement(self, input):
@@ -121,7 +116,6 @@ class UDPRobotControl:
             rec_len = serverSock.recv_into(data, 8)
             # Ensure we have a valid control code
             if data[0] == 81 and data[1] == 12:
-                print("Got command")
                 self.last_packet = int(round(time.time() * 1000))
                 if (data[2] == 1):
                     self.change_movement(Direction.FORWARD)
@@ -142,7 +136,11 @@ class UDPRobotControl:
                 elif (data[2] == 9):
                     self.change_movement(8)
                 elif (data[2] == 10):
+                    print("Call")
                     self.headlights()
+                else:
+                    print("No cmd: ")
+                    print(data)
 
 if __name__ == "__main__":
     ctrl = UDPRobotControl()
