@@ -1,9 +1,9 @@
 ###################################################################
-# UDP ROBOT CONTROL
-# DESC: The UDP robot control system controls the robot using UDP
-# packets.
+# UDP DISTANCE SENSORS
+# DESC: The distance sensors class reads data from the three distance
+# sensors on the front of the robot.
 # Author: Jonathan L Clark
-# Date: 12/3/2019
+# Date: 1/10/2019
 ###################################################################
 import socket
 import time
@@ -36,86 +36,67 @@ GPIO.output(TRIGGER_L, False)
 
 time.sleep(2)
 
+class SensorData:
+    def __init__(self, echo, trigger):
+        self.echo = echo
+        self.trigger = trigger
+        self.falling_edge = False
+        self.triggered = False
+        self.pulse_start_time = 0
+        self.pulse_end_time = 0
+        self.distance = 0.0
+
 class UDPRobotControl:
     def __init__(self):
-        self.left_falling = False
-        self.left_triggered = False
-        self.left_pulse_start = 0
-        self.left_pulse_end = 0
+        self.left_sensor = SensorData(ECHO_L, TRIGGER_L)
+        self.right_sensor = SensorData(ECHO_R, TRIGGER_R)
+        self.middle_sensor = SensorData(ECHO_M, TRIGGER_M)
         GPIO.add_event_detect(ECHO_L, GPIO.BOTH, self.left_sensor_interrupt)
+        GPIO.add_event_detect(ECHO_R, GPIO.BOTH, self.right_sensor_interrupt)
+        GPIO.add_event_detect(ECHO_M, GPIO.BOTH, self.mid_sensor_interrupt)
         print("UDP Robot Control listening")
-        # Start up the server thread
-        #self.server_thread = Thread(target = self.RightThread)
-        #self.server_thread.daemon = True
-        #self.server_thread.start()
 
-        #self.server_thread = Thread(target = self.LeftThread)
-        #self.server_thread.daemon = True
-        #self.server_thread.start()
+        self.left_thread = Thread(target = self.measure_sensor, args=(self.left_sensor, ))
+        self.left_thread.daemon = True
+        self.left_thread.start()
 
-        self.server_thread = Thread(target = self.measure_left_sensor)
-        self.server_thread.daemon = True
-        self.server_thread.start()
+        self.right_thread = Thread(target = self.measure_sensor, args=(self.right_sensor, ))
+        self.right_thread.daemon = True
+        self.right_thread.start()
 
-    def measure_left_sensor(self):
+        self.middle_thread = Thread(target = self.measure_sensor, args=(self.middle_sensor, ))
+        self.middle_thread.daemon = True
+        self.middle_thread.start()
+
+    def measure_sensor(self, sensor):
         while (True):
-            self.left_triggered = False
-            self.left_falling = False
-            GPIO.output(TRIGGER_L, True)
+            sensor.triggered = False
+            sensor.falling_edge = False
+            GPIO.output(sensor.trigger, True)
             time.sleep(0.00001)
-            GPIO.output(TRIGGER_L, False)
-            time.sleep(0.3) # Wait for the sensor to complete a reading
-            if self.left_triggered:
-                pulse_duration = self.left_pulse_end - self.left_pulse_start
-                distance = pulse_duration * 17150
-                print(distance)
-            else:
-                print("Out of range")
-            time.sleep(0.5)
+            GPIO.output(sensor.trigger, False)
+            time.sleep(0.1) # Wait for the sensor to complete a reading
+            pulse_duration = sensor.pulse_end_time - sensor.pulse_start_time
+            distance = pulse_duration * 17150
+            if distance > 0:
+                self.distance = distance
+
+    def handle_interrupt(self, sensor):
+        if sensor.falling_edge:
+            sensor.pulse_end_time = time.time()
+            sensor.falling_edge = False
+        else:
+            sensor.pulse_start_time = time.time()
+            sensor.falling_edge = True
 
     def left_sensor_interrupt(self, pin):
-        if self.left_falling:
-            self.left_pulse_end = time.time()
-            self.left_falling = False
-        else:
-            self.left_pulse_start = time.time()
-            self.left_falling = True
-        self.left_triggered = True
-            
+        self.handle_interrupt(self.left_sensor)
 
-    def LeftThread(self):
-        while (True):
-            GPIO.output(TRIGGER_L, True)
-            time.sleep(0.00001)
-            GPIO.output(TRIGGER_L, False)
+    def right_sensor_interrupt(self, pin):
+        self.handle_interrupt(self.right_sensor)
 
-            while GPIO.input(ECHO_L) == 0:
-                pulse_start = time.time()
-
-            while GPIO.input(ECHO_L) == 1:
-                pulse_end = time.time()
-
-            pulse_duration = pulse_end - pulse_start
-            distance = pulse_duration * 17150
-            print(distance)
-            time.sleep(0.5)
-
-    def MidThread(self):
-        while (True):
-            GPIO.output(TRIGGER_M, True)
-            time.sleep(0.00001)
-            GPIO.output(TRIGGER_M, False)
-
-            while GPIO.input(ECHO_M) == 0:
-                pulse_start = time.time()
-
-            while GPIO.input(ECHO_M) == 1:
-                pulse_end = time.time()
-
-            pulse_duration = pulse_end - pulse_start
-            distance = pulse_duration * 17150
-            print(distance)
-            time.sleep(1)
+    def mid_sensor_interrupt(self, pin):
+        self.handle_interrupt(self.middle_sensor)
 
 
 
