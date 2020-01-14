@@ -46,7 +46,7 @@ class SensorData:
         self.pulse_end_time = 0
         self.distance = 0.0
 
-class UDPRobotControl:
+class DistanceSensors:
     def __init__(self):
         self.left_sensor = SensorData(ECHO_L, TRIGGER_L)
         self.right_sensor = SensorData(ECHO_R, TRIGGER_R)
@@ -54,7 +54,7 @@ class UDPRobotControl:
         GPIO.add_event_detect(ECHO_L, GPIO.BOTH, self.left_sensor_interrupt)
         GPIO.add_event_detect(ECHO_R, GPIO.BOTH, self.right_sensor_interrupt)
         GPIO.add_event_detect(ECHO_M, GPIO.BOTH, self.mid_sensor_interrupt)
-        print("UDP Robot Control listening")
+        print("Distance Sensors operational")
 
         self.left_thread = Thread(target = self.measure_sensor, args=(self.left_sensor, ))
         self.left_thread.daemon = True
@@ -75,11 +75,11 @@ class UDPRobotControl:
             GPIO.output(sensor.trigger, True)
             time.sleep(0.00001)
             GPIO.output(sensor.trigger, False)
-            time.sleep(0.1) # Wait for the sensor to complete a reading
+            time.sleep(0.3) # Wait for the sensor to complete a reading
             pulse_duration = sensor.pulse_end_time - sensor.pulse_start_time
             distance = pulse_duration * 17150
             if distance > 0:
-                self.distance = distance
+                sensor.distance = distance
 
     def handle_interrupt(self, sensor):
         if sensor.falling_edge:
@@ -101,6 +101,6 @@ class UDPRobotControl:
 
 
 if __name__ == "__main__":
-    ctrl = UDPRobotControl()
+    ctrl = DistanceSensors()
     while (True):
         time.sleep(1)

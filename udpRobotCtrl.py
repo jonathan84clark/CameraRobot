@@ -12,12 +12,14 @@ from time import sleep
 import datetime
 import RPi.GPIO as GPIO
 from enum import Enum
+from distance_sensors import DistanceSensors
 
 FORWARD_A = 2
 FORWARD_B = 3
 STEERING_A = 4
 STEERING_B = 17
 HEADLIGHTS_1 = 25
+#HEADLIGHTS_2 = 22
 
 # Setup the GPIO pins
 GPIO.setwarnings(False) # Disable unused warnings
@@ -27,6 +29,7 @@ GPIO.setup(FORWARD_B, GPIO.OUT) # Fan Pin
 GPIO.setup(STEERING_A, GPIO.OUT) # AC Pin
 GPIO.setup(STEERING_B, GPIO.OUT) # Main power line
 GPIO.setup(HEADLIGHTS_1, GPIO.OUT) # Main power line
+#GPIO.setup(HEADLIGHTS_2, GPIO.OUT) # Main power line
 
 # Clear all relays
 GPIO.output(FORWARD_A, GPIO.LOW)
@@ -34,6 +37,7 @@ GPIO.output(FORWARD_B, GPIO.LOW)
 GPIO.output(STEERING_A, GPIO.LOW)
 GPIO.output(STEERING_B, GPIO.LOW)
 GPIO.output(HEADLIGHTS_1, GPIO.LOW)
+#GPIO.output(HEADLIGHTS_2, GPIO.LOW) # Main power line
 
 class Direction(Enum):
     FORWARD = 1
@@ -45,6 +49,7 @@ class Direction(Enum):
 
 class UDPRobotControl:
     def __init__(self):
+        #self.dist_sensors = distance_ref
         print("UDP Robot Control listening")
         self.headlight_state = False
         self.last_packet = int(round(time.time() * 1000))
@@ -136,7 +141,6 @@ class UDPRobotControl:
                 elif (data[2] == 9):
                     self.change_movement(8)
                 elif (data[2] == 10):
-                    print("Call")
                     self.headlights()
                 else:
                     print("No cmd: ")

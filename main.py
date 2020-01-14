@@ -17,37 +17,24 @@ import json
 import time
 from os.path import expanduser
 import RPi.GPIO as GPIO
+import subprocess
 from enum import Enum
+from udpRobotCtrl import UDPRobotControl
+from distance_sensors import DistanceSensors
 
 supported_files = {".html" : 'text/html', ".css" : 'text/css', "jpeg" : 'image/jpeg',
                    ".js" : 'text/javascript'}
-
-dataSet = {"mode" : 0.0 }
 
 FORWARD_A = 2
 FORWARD_B = 3
 STEERING_A = 4
 STEERING_B = 17
-HEADLIGHTS_1 = 27
-HEADLIGHTS_2 = 22
+#HEADLIGHTS_1 = 27
+#HEADLIGHTS_2 = 22
+HEADLIGHTS_1 = 25
+#HEADLIGHTS_2 = 22
 
-# Setup the GPIO pins
-GPIO.setwarnings(False) # Disable unused warnings
-GPIO.setmode(GPIO.BCM) # Broadcom pin-numbering scheme
-GPIO.setup(FORWARD_A, GPIO.OUT) # Heater Pin
-GPIO.setup(FORWARD_B, GPIO.OUT) # Fan Pin
-GPIO.setup(STEERING_A, GPIO.OUT) # AC Pin
-GPIO.setup(STEERING_B, GPIO.OUT) # Main power line
-GPIO.setup(HEADLIGHTS_1, GPIO.OUT) # Main power line
-GPIO.setup(HEADLIGHTS_2, GPIO.OUT) # Main power line
-
-# Clear all relays
-GPIO.output(FORWARD_A, GPIO.LOW)
-GPIO.output(FORWARD_B, GPIO.LOW)
-GPIO.output(STEERING_A, GPIO.LOW)
-GPIO.output(STEERING_B, GPIO.LOW)
-GPIO.output(HEADLIGHTS_1, GPIO.HIGH)
-GPIO.output(HEADLIGHTS_2, GPIO.LOW)
+dataSet = {"mode" : 0.0 , "left_sensor" : 0.0, "mid_sensor" : 0.0, "right_sensor" : 0.0}
 
 headlight_state = False
 
@@ -66,13 +53,18 @@ class S(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+        global distanceSensors
+
         if (self.path == "/"):
             self.path = "/index.html"
         
         curdir = "/home/pi/CameraRobot"
         file_path = curdir + sep + self.path
         filename, file_extension = os.path.splitext(file_path)
-        if (self.path == "/data.js"):
+        if (self.path == "/data.json"):
+            dataSet["left_sensor"] = distanceSensors.left_sensor.distance
+            dataSet["mid_sensor"] = distanceSensors.middle_sensor.distance
+            dataSet["right_sensor"] = distanceSensors.right_sensor.distance
             self.send_response(200)
             self.send_header('Content-type', "text/json")
             self.end_headers()
@@ -131,11 +123,11 @@ class S(BaseHTTPRequestHandler):
         global headlight_state
         if headlight_state:
             GPIO.output(HEADLIGHTS_1, GPIO.HIGH)
-            GPIO.output(HEADLIGHTS_2, GPIO.LOW)
+            #GPIO.output(HEADLIGHTS_2, GPIO.LOW)
             headlight_state = False
         else:
             GPIO.output(HEADLIGHTS_1, GPIO.LOW)
-            GPIO.output(HEADLIGHTS_2, GPIO.HIGH)
+            #GPIO.output(HEADLIGHTS_2, GPIO.HIGH)
             headlight_state = True
 
     def change_movement(self, input):
@@ -178,6 +170,10 @@ if __name__ == "__main__":
     thread = Thread(target = runServer)
     thread.daemon = True
     thread.start()
+
+    subprocess.call('python3 /home/pi/CameraRobot/rpi_camera.py &', shell=True)
+    udpControl = UDPRobotControl()
+    distanceSensors = DistanceSensors()
 
     while (True):
         time.sleep(1)
