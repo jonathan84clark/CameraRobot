@@ -140,8 +140,12 @@ class UDPRobotControl:
                     self.change_movement(7)
                 elif (data[2] == 9):
                     self.change_movement(8)
-                elif (data[2] == 10):
-                    self.headlights()
+                elif (data[3] == 1):
+                    GPIO.output(HEADLIGHTS_1, GPIO.HIGH)
+                    self.headlight_state = True
+                elif (data[3] == 0):
+                    GPIO.output(HEADLIGHTS_1, GPIO.LOW)
+                    self.headlight_state = False
                 else:
                     print("No cmd: ")
                     print(data)
