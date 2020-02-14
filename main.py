@@ -19,16 +19,17 @@ from os.path import expanduser
 import RPi.GPIO as GPIO
 import subprocess
 from enum import Enum
-from udpRobotCtrl import UDPRobotControl
-from distance_sensors import DistanceSensors
+#from udpRobotCtrl import UDPRobotControl
+#from distance_sensors import DistanceSensors
 
 supported_files = {".html" : 'text/html', ".css" : 'text/css', "jpeg" : 'image/jpeg',
                    ".js" : 'text/javascript'}
 
 FORWARD_A = 2
 FORWARD_B = 3
-STEERING_A = 4
+STEERING_A = 26
 STEERING_B = 17
+HEADLIGHTS_1 = 25
 #HEADLIGHTS_1 = 27
 #HEADLIGHTS_2 = 22
 HEADLIGHTS_1 = 25
@@ -167,13 +168,13 @@ def runServer(server_class=HTTPServer, handler_class=S, port=5000):
 
 if __name__ == "__main__":
 	# Start up the server thread
-    thread = Thread(target = runServer)
-    thread.daemon = True
-    thread.start()
+    #thread = Thread(target = runServer)
+    #thread.daemon = True
+    #thread.start()
 
-    subprocess.call('python3 /home/pi/CameraRobot/rpi_camera.py &', shell=True)
-    udpControl = UDPRobotControl()
-    distanceSensors = DistanceSensors()
+    #subprocess.call('python3 /home/pi/CameraRobot/rpi_camera.py &', shell=True)
+    #udpControl = UDPRobotControl()
+    #distanceSensors = DistanceSensors()
 
     while (True):
         time.sleep(1)

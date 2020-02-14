@@ -14,28 +14,31 @@ import RPi.GPIO as GPIO
 from enum import Enum
 from distance_sensors import DistanceSensors
 
-FORWARD_A = 2
-FORWARD_B = 3
-STEERING_A = 4
-STEERING_B = 17
+LEFT_A = 2
+LEFT_B = 3
+RIGHT_A = 26
+RIGHT_B = 17
+HEADLIGHTS_1 = 25
+#HEADLIGHTS_1 = 27
+#HEADLIGHTS_2 = 22
 HEADLIGHTS_1 = 25
 #HEADLIGHTS_2 = 22
 
 # Setup the GPIO pins
 GPIO.setwarnings(False) # Disable unused warnings
 GPIO.setmode(GPIO.BCM) # Broadcom pin-numbering scheme
-GPIO.setup(FORWARD_A, GPIO.OUT) # Heater Pin
-GPIO.setup(FORWARD_B, GPIO.OUT) # Fan Pin
-GPIO.setup(STEERING_A, GPIO.OUT) # AC Pin
-GPIO.setup(STEERING_B, GPIO.OUT) # Main power line
+GPIO.setup(LEFT_A, GPIO.OUT) # Heater Pin
+GPIO.setup(LEFT_B, GPIO.OUT) # Fan Pin
+GPIO.setup(RIGHT_A, GPIO.OUT) # AC Pin
+GPIO.setup(RIGHT_B, GPIO.OUT) # Main power line
 GPIO.setup(HEADLIGHTS_1, GPIO.OUT) # Main power line
 #GPIO.setup(HEADLIGHTS_2, GPIO.OUT) # Main power line
 
 # Clear all relays
-GPIO.output(FORWARD_A, GPIO.LOW)
-GPIO.output(FORWARD_B, GPIO.LOW)
-GPIO.output(STEERING_A, GPIO.LOW)
-GPIO.output(STEERING_B, GPIO.LOW)
+GPIO.output(LEFT_A, GPIO.LOW)
+GPIO.output(LEFT_B, GPIO.LOW)
+GPIO.output(RIGHT_A, GPIO.LOW)
+GPIO.output(RIGHT_B, GPIO.LOW)
 GPIO.output(HEADLIGHTS_1, GPIO.LOW)
 #GPIO.output(HEADLIGHTS_2, GPIO.LOW) # Main power line
 
@@ -73,24 +76,42 @@ class UDPRobotControl:
             self.headlight_state = True
 
     def change_movement(self, input):
+        moveForwardRev = False
         if input == Direction.FORWARD:
-            GPIO.output(FORWARD_A, GPIO.HIGH)
-            GPIO.output(FORWARD_B, GPIO.LOW)
+            GPIO.output(LEFT_A, GPIO.LOW)
+            GPIO.output(LEFT_B, GPIO.HIGH)
+            GPIO.output(RIGHT_A, GPIO.LOW)
+            GPIO.output(RIGHT_B, GPIO.HIGH)
+            moveForwardRev = True
         elif input == Direction.REVERSE:
-            GPIO.output(FORWARD_A, GPIO.LOW)
-            GPIO.output(FORWARD_B, GPIO.HIGH)
+            GPIO.output(LEFT_A, GPIO.HIGH)
+            GPIO.output(LEFT_B, GPIO.LOW)
+            GPIO.output(RIGHT_A, GPIO.HIGH)
+            GPIO.output(RIGHT_B, GPIO.LOW)
+            moveForwardRev = True
         elif input == Direction.STOP:
-            GPIO.output(FORWARD_A, GPIO.LOW)
-            GPIO.output(FORWARD_B, GPIO.LOW)
+            GPIO.output(LEFT_A, GPIO.LOW)
+            GPIO.output(LEFT_B, GPIO.LOW)
+            GPIO.output(RIGHT_A, GPIO.LOW)
+            GPIO.output(RIGHT_B, GPIO.LOW)
         elif input == Direction.CENTER:
-            GPIO.output(STEERING_A, GPIO.LOW)
-            GPIO.output(STEERING_B, GPIO.LOW)
-        elif input == Direction.LEFT:
-            GPIO.output(STEERING_A, GPIO.LOW)
-            GPIO.output(STEERING_B, GPIO.HIGH)
+            GPIO.output(RIGHT_A, GPIO.LOW)
+            GPIO.output(RIGHT_B, GPIO.LOW)
+        if input == Direction.LEFT:
+            GPIO.output(RIGHT_A, GPIO.LOW)
+            GPIO.output(RIGHT_B, GPIO.HIGH)
+            GPIO.output(LEFT_A, GPIO.HIGH)
+            GPIO.output(LEFT_B, GPIO.LOW)
         elif input == Direction.RIGHT:
-            GPIO.output(STEERING_A, GPIO.HIGH)
-            GPIO.output(STEERING_B, GPIO.LOW)
+            GPIO.output(LEFT_A, GPIO.LOW)
+            GPIO.output(LEFT_B, GPIO.HIGH)
+            GPIO.output(RIGHT_A, GPIO.HIGH)
+            GPIO.output(RIGHT_B, GPIO.LOW)
+        elif not moveForwardRev:
+            GPIO.output(LEFT_A, GPIO.LOW)
+            GPIO.output(LEFT_B, GPIO.LOW)
+            GPIO.output(RIGHT_A, GPIO.LOW)
+            GPIO.output(RIGHT_B, GPIO.LOW)
 
     # Monitors the control system; checking for timeouts
     def CheckCOMTimeout(self):
