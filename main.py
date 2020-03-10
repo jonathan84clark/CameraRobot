@@ -172,9 +172,9 @@ if __name__ == "__main__":
     #thread.daemon = True
     #thread.start()
 
-    #subprocess.call('python3 /home/pi/CameraRobot/rpi_camera.py &', shell=True)
-    #udpControl = UDPRobotControl()
-    #distanceSensors = DistanceSensors()
+    subprocess.call('python3 /home/pi/CameraRobot/rpi_camera.py &', shell=True)
+    udpControl = UDPRobotControl()
+    distanceSensors = DistanceSensors()
 
     while (True):
         time.sleep(1)
