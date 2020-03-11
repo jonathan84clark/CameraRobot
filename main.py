@@ -19,8 +19,8 @@ from os.path import expanduser
 import RPi.GPIO as GPIO
 import subprocess
 from enum import Enum
-#from udpRobotCtrl import UDPRobotControl
-#from distance_sensors import DistanceSensors
+from udpRobotCtrl import UDPRobotControl
+from distance_sensors import DistanceSensors
 
 supported_files = {".html" : 'text/html', ".css" : 'text/css', "jpeg" : 'image/jpeg',
                    ".js" : 'text/javascript'}

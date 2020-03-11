@@ -13,6 +13,7 @@ import datetime
 import RPi.GPIO as GPIO
 from enum import Enum
 from distance_sensors import DistanceSensors
+from pwmDriver import PWMDriver
 
 LEFT_A = 2
 LEFT_B = 3
@@ -57,6 +58,7 @@ class UDPRobotControl:
         self.headlight_state = False
         self.last_packet = int(round(time.time() * 1000))
         self.timed_out = False
+        self.driver = PWMDriver()
 
         # Start up the server thread
         self.server_thread = Thread(target = self.UdpServerThread)
@@ -78,40 +80,28 @@ class UDPRobotControl:
     def change_movement(self, input):
         moveForwardRev = False
         if input == Direction.FORWARD:
-            GPIO.output(LEFT_A, GPIO.LOW)
-            GPIO.output(LEFT_B, GPIO.HIGH)
-            GPIO.output(RIGHT_A, GPIO.LOW)
-            GPIO.output(RIGHT_B, GPIO.HIGH)
+            self.driver.set_throttle(0.5, 0.0)
+            #self.driver.main_throttle = 0.5
+            #print("Call")
+            #self.driver.turn_vector = 0.0
             moveForwardRev = True
         elif input == Direction.REVERSE:
-            GPIO.output(LEFT_A, GPIO.HIGH)
-            GPIO.output(LEFT_B, GPIO.LOW)
-            GPIO.output(RIGHT_A, GPIO.HIGH)
-            GPIO.output(RIGHT_B, GPIO.LOW)
+            #self.driver.main_throttle = -0.5
+            self.driver.set_throttle(-0.5, 0.0)
+            #self.driver.turn_vector = 0.0
             moveForwardRev = True
         elif input == Direction.STOP:
-            GPIO.output(LEFT_A, GPIO.LOW)
-            GPIO.output(LEFT_B, GPIO.LOW)
-            GPIO.output(RIGHT_A, GPIO.LOW)
-            GPIO.output(RIGHT_B, GPIO.LOW)
+            #self.driver.main_throttle = 0.0
+            self.driver.set_throttle(0.0, 0.0)
         elif input == Direction.CENTER:
-            GPIO.output(RIGHT_A, GPIO.LOW)
-            GPIO.output(RIGHT_B, GPIO.LOW)
+            self.driver.turn_vector = 0.0
         if input == Direction.LEFT:
-            GPIO.output(RIGHT_A, GPIO.LOW)
-            GPIO.output(RIGHT_B, GPIO.HIGH)
-            GPIO.output(LEFT_A, GPIO.HIGH)
-            GPIO.output(LEFT_B, GPIO.LOW)
+            self.driver.turn_vector = -0.5
         elif input == Direction.RIGHT:
-            GPIO.output(LEFT_A, GPIO.LOW)
-            GPIO.output(LEFT_B, GPIO.HIGH)
-            GPIO.output(RIGHT_A, GPIO.HIGH)
-            GPIO.output(RIGHT_B, GPIO.LOW)
+            self.driver.turn_vector = 0.5
         elif not moveForwardRev:
-            GPIO.output(LEFT_A, GPIO.LOW)
-            GPIO.output(LEFT_B, GPIO.LOW)
-            GPIO.output(RIGHT_A, GPIO.LOW)
-            GPIO.output(RIGHT_B, GPIO.LOW)
+            self.driver.turn_vector = 0.0
+            self.driver.main_throttle = 0.0
 
     # Monitors the control system; checking for timeouts
     def CheckCOMTimeout(self):
