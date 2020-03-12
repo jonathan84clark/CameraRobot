@@ -7,6 +7,7 @@
 ###################################################################
 import socket
 import time
+import serial
 from threading import Thread
 from time import sleep
 import datetime
@@ -58,7 +59,7 @@ class UDPRobotControl:
         self.headlight_state = False
         self.last_packet = int(round(time.time() * 1000))
         self.timed_out = False
-        self.driver = PWMDriver()
+        self.ser = serial.Serial(port='/dev/ttyUSB0', baudrate=9600)
 
         # Start up the server thread
         self.server_thread = Thread(target = self.UdpServerThread)
@@ -68,6 +69,52 @@ class UDPRobotControl:
         self.com_thread = Thread(target = self.CheckCOMTimeout)
         self.com_thread.daemon = True
         self.com_thread.start()
+
+    # Handles communication with the main motor
+    def set_throttle(self, set_forward, set_turn):
+        left_turn_vector = 0.0
+        right_turn_vector = 0.0
+        if set_turn < 0.0:
+            left_turn_vector = abs(set_turn)
+            if set_forward < 0.0:
+                left_turn_vector *= -1.0
+            elif set_turn > 0.0:
+                right_turn_vector = set_turn
+                if set_forward < 0.0:
+                    right_turn_vector *= -1.0
+
+        left_throttle = 0x00 | int((set_forward * 255.0) - (left_turn_vector * 255.0))
+        right_throttle = 0x00 | int((set_forward * 255.0) - (right_turn_vector * 255.0))
+        right_forward = 0
+        left_forward = 0
+        right_reverse = 0
+        left_reverse = 0
+        if right_throttle > 0.0:
+            right_forward = right_throttle
+        elif right_throttle < 0.0:
+            right_reverse = abs(right_throttle)
+
+        if left_throttle > 0.0:
+            left_forward = left_throttle
+        elif left_throttle < 0.0:
+            left_reverse = abs(left_throttle)
+        #self.ser.flush()
+        #self.ser.write(bytearray([0x54, 2, right_forward, 0, 0, 0, 0, 2, right_reverse, 2, left_forward, 2, left_reverse, 0, 0, 10]))
+        if right_forward > 0:
+            self.ser.write(bytearray([0x01, right_forward, 0x00]))
+        elif right_reverse > 0:
+            self.ser.write(bytearray([0x08, right_reverse, 0x00]))
+        else:
+            self.ser.write(bytearray([0x01, 0, 0x00]))
+            self.ser.write(bytearray([0x08, 0, 0x00]))
+        #time.sleep(0.1)
+        if left_forward > 0:
+            self.ser.write(bytearray([0x10, left_forward, 0x00]))
+        elif left_reverse > 0:
+            self.ser.write(bytearray([0x20, left_reverse, 0x00]))
+        else:
+            self.ser.write(bytearray([0x10, 0, 0x00]))
+            self.ser.write(bytearray([0x20, 0, 0x00]))
 
     def headlights(self):
         if self.headlight_state:
@@ -80,28 +127,29 @@ class UDPRobotControl:
     def change_movement(self, input):
         moveForwardRev = False
         if input == Direction.FORWARD:
-            self.driver.set_throttle(0.5, 0.0)
+            self.set_throttle(0.5, 0.0)
+            print("Call")
             #self.driver.main_throttle = 0.5
             #print("Call")
             #self.driver.turn_vector = 0.0
             moveForwardRev = True
         elif input == Direction.REVERSE:
             #self.driver.main_throttle = -0.5
-            self.driver.set_throttle(-0.5, 0.0)
+            self.set_throttle(-0.5, 0.0)
             #self.driver.turn_vector = 0.0
             moveForwardRev = True
         elif input == Direction.STOP:
             #self.driver.main_throttle = 0.0
-            self.driver.set_throttle(0.0, 0.0)
+            pass#self.driver.set_throttle(0.0, 0.0)
         elif input == Direction.CENTER:
-            self.driver.turn_vector = 0.0
+            pass #self.driver.turn_vector = 0.0
         if input == Direction.LEFT:
-            self.driver.turn_vector = -0.5
+            pass #self.driver.turn_vector = -0.5
         elif input == Direction.RIGHT:
-            self.driver.turn_vector = 0.5
+            pass #self.driver.turn_vector = 0.5
         elif not moveForwardRev:
-            self.driver.turn_vector = 0.0
-            self.driver.main_throttle = 0.0
+            pass#self.driver.turn_vector = 0.0
+            #self.driver.main_throttle = 0.0
 
     # Monitors the control system; checking for timeouts
     def CheckCOMTimeout(self):

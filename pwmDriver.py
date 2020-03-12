@@ -50,11 +50,27 @@ class PWMDriver:
             left_forward = left_throttle
         elif left_throttle < 0.0:
             left_reverse = abs(left_throttle)
-        self.ser.flush()
-        self.ser.write(bytearray([0x54, 2, right_forward, 0, 0, 0, 0, 2, right_reverse, 2, left_forward, 2, left_reverse, 0, 0, 10]))
-        time.sleep(0.5)
+        #self.ser.flush()
+        #self.ser.write(bytearray([0x54, 2, right_forward, 0, 0, 0, 0, 2, right_reverse, 2, left_forward, 2, left_reverse, 0, 0, 10]))
+        if right_forward > 0:
+            self.ser.write(bytearray([0x01, right_forward, 0x00]))
+        elif right_reverse > 0:
+            self.ser.write(bytearray([0x08, right_reverse, 0x00]))
+        else:
+            self.ser.write(bytearray([0x01, 0, 0x00]))
+            self.ser.write(bytearray([0x08, 0, 0x00]))
+        #time.sleep(0.1)
+        if left_forward > 0:
+            self.ser.write(bytearray([0x10, left_forward, 0x00]))
+        elif left_reverse > 0:
+            self.ser.write(bytearray([0x20, left_reverse, 0x00]))
+        else:
+            self.ser.write(bytearray([0x10, 0, 0x00]))
+            self.ser.write(bytearray([0x20, 0, 0x00]))
+        #time.sleep(0.5)
 
 if __name__ == "__main__":
     ctrl = PWMDriver()
-    while (True):
-        time.sleep(1)
+    ctrl.set_throttle(0.0, 0.0)
+    #while (True):
+        #time.sleep(1)

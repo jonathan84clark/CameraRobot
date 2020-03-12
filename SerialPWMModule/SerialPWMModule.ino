@@ -10,7 +10,6 @@ unsigned long msTicks = 0;
 unsigned long timeout_time = 0;
 int commandIndex = 0;
 int commandSet[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int motorSpeeds[] = {0, 0, 0, 0, 0, 0};
 
 #define PWM_1 3
 #define PWM_2 5
@@ -33,54 +32,36 @@ void loop() {
    msTicks = millis();
   // send data only when you receive data:
   if (Serial.available() > 0) {
-    // read the incoming byte:
     incomingByte = Serial.read();
-    commandSet[commandIndex] = incomingByte;
-    // At this point we recieved 16 bytes, now we process the message
-    if (commandSet[commandIndex] == 10 && commandSet[0] == 0x54)
+    commandSet[commandIndex++] = incomingByte;
+    if (commandIndex == 3)
     {
-        if (commandSet[1] == 2 && motorSpeeds[0] != commandSet[2])
-        {
-           motorSpeeds[0] = commandSet[2];
-           analogWrite(PWM_1, commandSet[2]);
-        }
-        if (commandSet[3] == 2 && motorSpeeds[1] != commandSet[4])
-        {
-           motorSpeeds[1] = commandSet[4];
-           analogWrite(PWM_2, commandSet[4]);
-        }
-        if (commandSet[5] == 2 && motorSpeeds[2] != commandSet[6])
-        {
-           motorSpeeds[2] = commandSet[6];
-           analogWrite(PWM_3, commandSet[6]);
-        }
-        if (commandSet[7] == 2 && motorSpeeds[3] != commandSet[8])
-        {
-           motorSpeeds[3] = commandSet[8];
-           analogWrite(PWM_4, commandSet[8]);
-        }
-        if (commandSet[9] == 2 && motorSpeeds[4] != commandSet[10])
-        {
-           motorSpeeds[4] = commandSet[10];
-           analogWrite(PWM_5, commandSet[10]);
-        }
-        if (commandSet[11] == 2 && motorSpeeds[5] != commandSet[12])
-        {
-           motorSpeeds[5] = commandSet[12];
-           analogWrite(PWM_6, commandSet[12]);
-        }
         commandIndex = 0;
+        if (commandSet[0] == 0x01)
+        {
+           analogWrite(PWM_1, commandSet[1]);
+        }
+        if (commandSet[0] == 0x02)
+        {
+           analogWrite(PWM_2, commandSet[1]);
+        }
+        if (commandSet[0] == 0x04)
+        {
+           analogWrite(PWM_3, commandSet[1]);
+        }
+        if (commandSet[0] == 0x08)
+        {
+           analogWrite(PWM_4, commandSet[1]);
+        }
+        if (commandSet[0] == 0x10)
+        {
+           analogWrite(PWM_5, commandSet[1]);
+        }
+        if (commandSet[0] == 0x20)
+        {
+           analogWrite(PWM_6, commandSet[1]);
+        }
+        
     }
-    timeout_time = msTicks + 1000;
-    commandIndex++;
-  }
-  if (timeout_time < msTicks)
-  {
-     //analogWrite(PWM_1, 0);
-     //analogWrite(PWM_2, 0);
-     //analogWrite(PWM_3, 0);
-     //analogWrite(PWM_4, 0);
-     //analogWrite(PWM_5, 0);
-     //analogWrite(PWM_6, 0);
   }
 }
