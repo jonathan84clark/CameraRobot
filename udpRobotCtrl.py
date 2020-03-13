@@ -16,10 +16,10 @@ from enum import Enum
 from distance_sensors import DistanceSensors
 from pwmDriver import PWMDriver
 
-LEFT_A = 2
-LEFT_B = 3
-RIGHT_A = 26
-RIGHT_B = 17
+LEFT_A = 19
+LEFT_B = 13
+RIGHT_A = 18
+RIGHT_B = 12
 HEADLIGHTS_1 = 25
 #HEADLIGHTS_1 = 27
 #HEADLIGHTS_2 = 22
@@ -37,11 +37,22 @@ GPIO.setup(HEADLIGHTS_1, GPIO.OUT) # Main power line
 #GPIO.setup(HEADLIGHTS_2, GPIO.OUT) # Main power line
 
 # Clear all relays
-GPIO.output(LEFT_A, GPIO.LOW)
-GPIO.output(LEFT_B, GPIO.LOW)
-GPIO.output(RIGHT_A, GPIO.LOW)
-GPIO.output(RIGHT_B, GPIO.LOW)
+left_a = GPIO.PWM(LEFT_A, 50)
+left_b = GPIO.PWM(LEFT_B, 50)
+
+right_a = GPIO.PWM(RIGHT_A, 50)
+right_b = GPIO.PWM(RIGHT_B, 50)
+
+left_a.start(0) 
+left_b.start(0)
+
+right_a.start(0) 
+right_b.start(0)
+
+#left_a.ChangeDutyCycle(0)
+
 GPIO.output(HEADLIGHTS_1, GPIO.LOW)
+
 #GPIO.output(HEADLIGHTS_2, GPIO.LOW) # Main power line
 
 class Direction(Enum):
@@ -54,12 +65,14 @@ class Direction(Enum):
 
 class UDPRobotControl:
     def __init__(self):
+        self.throttle = 0.0
+        self.steering = 0.0
         #self.dist_sensors = distance_ref
         print("UDP Robot Control listening")
         self.headlight_state = False
         self.last_packet = int(round(time.time() * 1000))
         self.timed_out = False
-        self.ser = serial.Serial(port='/dev/ttyUSB0', baudrate=9600)
+        #self.ser = serial.Serial(port='/dev/ttyUSB0', baudrate=9600)
 
         # Start up the server thread
         self.server_thread = Thread(target = self.UdpServerThread)
@@ -83,38 +96,21 @@ class UDPRobotControl:
                 if set_forward < 0.0:
                     right_turn_vector *= -1.0
 
-        left_throttle = 0x00 | int((set_forward * 255.0) - (left_turn_vector * 255.0))
-        right_throttle = 0x00 | int((set_forward * 255.0) - (right_turn_vector * 255.0))
-        right_forward = 0
-        left_forward = 0
-        right_reverse = 0
-        left_reverse = 0
-        if right_throttle > 0.0:
-            right_forward = right_throttle
+        left_throttle = 0x00 | int((set_forward * 100.0) - (left_turn_vector * 100.0))
+        right_throttle = 0x00 | int((set_forward * 100.0) - (right_turn_vector * 100.0))
+        if right_throttle >= 0.0:
+            right_a.ChangeDutyCycle(right_throttle)
+            right_b.ChangeDutyCycle(0)
         elif right_throttle < 0.0:
-            right_reverse = abs(right_throttle)
+            right_a.ChangeDutyCycle(0)
+            right_b.ChangeDutyCycle(abs(right_throttle))
 
-        if left_throttle > 0.0:
-            left_forward = left_throttle
+        if left_throttle >= 0.0:
+            left_a.ChangeDutyCycle(left_throttle)
+            left_b.ChangeDutyCycle(0)
         elif left_throttle < 0.0:
-            left_reverse = abs(left_throttle)
-        #self.ser.flush()
-        #self.ser.write(bytearray([0x54, 2, right_forward, 0, 0, 0, 0, 2, right_reverse, 2, left_forward, 2, left_reverse, 0, 0, 10]))
-        if right_forward > 0:
-            self.ser.write(bytearray([0x01, right_forward, 0x00]))
-        elif right_reverse > 0:
-            self.ser.write(bytearray([0x08, right_reverse, 0x00]))
-        else:
-            self.ser.write(bytearray([0x01, 0, 0x00]))
-            self.ser.write(bytearray([0x08, 0, 0x00]))
-        #time.sleep(0.1)
-        if left_forward > 0:
-            self.ser.write(bytearray([0x10, left_forward, 0x00]))
-        elif left_reverse > 0:
-            self.ser.write(bytearray([0x20, left_reverse, 0x00]))
-        else:
-            self.ser.write(bytearray([0x10, 0, 0x00]))
-            self.ser.write(bytearray([0x20, 0, 0x00]))
+            left_a.ChangeDutyCycle(0)
+            left_b.ChangeDutyCycle(abs(left_throttle))
 
     def headlights(self):
         if self.headlight_state:
@@ -126,30 +122,23 @@ class UDPRobotControl:
 
     def change_movement(self, input):
         moveForwardRev = False
+        forward_throttle = 0.0
+        steering_angle = 0.0
         if input == Direction.FORWARD:
-            self.set_throttle(0.5, 0.0)
-            print("Call")
-            #self.driver.main_throttle = 0.5
-            #print("Call")
-            #self.driver.turn_vector = 0.0
-            moveForwardRev = True
+            forward_throttle = 0.8
         elif input == Direction.REVERSE:
-            #self.driver.main_throttle = -0.5
-            self.set_throttle(-0.5, 0.0)
-            #self.driver.turn_vector = 0.0
-            moveForwardRev = True
+            forward_throttle = -0.8
         elif input == Direction.STOP:
-            #self.driver.main_throttle = 0.0
-            pass#self.driver.set_throttle(0.0, 0.0)
+            forward_throttle = 0.0
+            #print("Stop")
         elif input == Direction.CENTER:
-            pass #self.driver.turn_vector = 0.0
+            steering_angle = 0.0
         if input == Direction.LEFT:
-            pass #self.driver.turn_vector = -0.5
+            steering_angle = 0.8
         elif input == Direction.RIGHT:
-            pass #self.driver.turn_vector = 0.5
-        elif not moveForwardRev:
-            pass#self.driver.turn_vector = 0.0
-            #self.driver.main_throttle = 0.0
+            steering_angle = -0.8
+
+        self.set_throttle(forward_throttle, steering_angle)
 
     # Monitors the control system; checking for timeouts
     def CheckCOMTimeout(self):
