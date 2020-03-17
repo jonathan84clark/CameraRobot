@@ -25,19 +25,10 @@ from distance_sensors import DistanceSensors
 supported_files = {".html" : 'text/html', ".css" : 'text/css', "jpeg" : 'image/jpeg',
                    ".js" : 'text/javascript'}
 
-FORWARD_A = 2
-FORWARD_B = 3
-STEERING_A = 26
-STEERING_B = 17
-HEADLIGHTS_1 = 25
-#HEADLIGHTS_1 = 27
-#HEADLIGHTS_2 = 22
-HEADLIGHTS_1 = 25
-#HEADLIGHTS_2 = 22
-
 dataSet = {"mode" : 0.0 , "left_sensor" : 0.0, "mid_sensor" : 0.0, "right_sensor" : 0.0}
 
 headlight_state = False
+HEADLIGHTS_1 = 25
 
 class Direction(Enum):
     FORWARD = 1
@@ -86,6 +77,7 @@ class S(BaseHTTPRequestHandler):
 
     def do_POST(self):
         global dataSet
+        global udpControl
         # Doesn't do anything with posted data
         output = "Submitted"
         content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
@@ -95,23 +87,23 @@ class S(BaseHTTPRequestHandler):
             key_value = post_str.split("=")
             if (len(key_value) == 2):
                 if (key_value[0] == "forward"):
-                    self.change_movement(Direction.FORWARD)
+                    udpControl.set_throttle(0.8, 0.0)
                 elif (key_value[0] == "stopforward"):
-                    self.change_movement(Direction.STOP)
+                    udpControl.set_throttle(0.0, 0.0)
                 elif (key_value[0] == "reverse"):
-                    self.change_movement(Direction.REVERSE)
+                    udpControl.set_throttle(-0.8, 0.0)
                 elif (key_value[0] == "stopreverse"):
-                    self.change_movement(Direction.STOP)
+                    udpControl.set_throttle(0.0, 0.0)
                 elif (key_value[0] == "center"):
-                    self.change_movement(Direction.CENTER)
+                    udpControl.set_throttle(0.0, 0.0)
                 elif (key_value[0] == "left"):
-                    self.change_movement(Direction.LEFT)
+                    udpControl.set_throttle(0.0, -0.8)
                 elif (key_value[0] == "right"):
-                    self.change_movement(Direction.RIGHT)
+                    udpControl.set_throttle(0.0, 0.8)
                 elif (key_value[0] == "stopleft"):
-                    self.change_movement(7)
+                    udpControl.set_throttle(0.0, 0.0)
                 elif (key_value[0] == "stopright"):
-                    self.change_movement(8)
+                    udpControl.set_throttle(0.0, 0.0)
                 elif (key_value[0] == "toggle_lights"):
                     self.headlights()
             else:
@@ -124,33 +116,10 @@ class S(BaseHTTPRequestHandler):
         global headlight_state
         if headlight_state:
             GPIO.output(HEADLIGHTS_1, GPIO.HIGH)
-            #GPIO.output(HEADLIGHTS_2, GPIO.LOW)
             headlight_state = False
         else:
             GPIO.output(HEADLIGHTS_1, GPIO.LOW)
-            #GPIO.output(HEADLIGHTS_2, GPIO.HIGH)
             headlight_state = True
-
-    def change_movement(self, input):
-        if input == Direction.FORWARD:
-            GPIO.output(FORWARD_A, GPIO.HIGH)
-            GPIO.output(FORWARD_B, GPIO.LOW)
-        elif input == Direction.REVERSE:
-            GPIO.output(FORWARD_A, GPIO.LOW)
-            GPIO.output(FORWARD_B, GPIO.HIGH)
-        elif input == Direction.STOP:
-            GPIO.output(FORWARD_A, GPIO.LOW)
-            GPIO.output(FORWARD_B, GPIO.LOW)
-        elif input == Direction.CENTER:
-            GPIO.output(STEERING_A, GPIO.LOW)
-            GPIO.output(STEERING_B, GPIO.LOW)
-        elif input == Direction.LEFT:
-            GPIO.output(STEERING_A, GPIO.LOW)
-            GPIO.output(STEERING_B, GPIO.HIGH)
-        elif input == Direction.RIGHT:
-            GPIO.output(STEERING_A, GPIO.HIGH)
-            GPIO.output(STEERING_B, GPIO.LOW)
-        print("Got movement post: " +  str(input))
 
 def runServer(server_class=HTTPServer, handler_class=S, port=5000):
     global dataSet
@@ -168,9 +137,9 @@ def runServer(server_class=HTTPServer, handler_class=S, port=5000):
 
 if __name__ == "__main__":
 	# Start up the server thread
-    #thread = Thread(target = runServer)
-    #thread.daemon = True
-    #thread.start()
+    thread = Thread(target = runServer)
+    thread.daemon = True
+    thread.start()
 
     subprocess.call('python3 /home/pi/CameraRobot/rpi_camera.py &', shell=True)
     udpControl = UDPRobotControl()

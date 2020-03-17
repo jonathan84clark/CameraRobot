@@ -21,6 +21,7 @@ ECHO_M = 24
 TRIGGER_L = 8
 ECHO_L = 7
 
+GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM) # Broadcom pin-numbering scheme
 GPIO.setup(TRIGGER_R,GPIO.OUT)
 GPIO.setup(ECHO_R,GPIO.IN)
