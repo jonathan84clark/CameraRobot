@@ -14,17 +14,13 @@ import datetime
 import RPi.GPIO as GPIO
 from enum import Enum
 from distance_sensors import DistanceSensors
-from pwmDriver import PWMDriver
 
 LEFT_A = 19
 LEFT_B = 13
 RIGHT_A = 18
 RIGHT_B = 12
 HEADLIGHTS_1 = 25
-#HEADLIGHTS_1 = 27
-#HEADLIGHTS_2 = 22
 HEADLIGHTS_1 = 25
-#HEADLIGHTS_2 = 22
 
 # Setup the GPIO pins
 GPIO.setwarnings(False) # Disable unused warnings
@@ -34,7 +30,6 @@ GPIO.setup(LEFT_B, GPIO.OUT) # Fan Pin
 GPIO.setup(RIGHT_A, GPIO.OUT) # AC Pin
 GPIO.setup(RIGHT_B, GPIO.OUT) # Main power line
 GPIO.setup(HEADLIGHTS_1, GPIO.OUT) # Main power line
-#GPIO.setup(HEADLIGHTS_2, GPIO.OUT) # Main power line
 
 # Clear all relays
 left_a = GPIO.PWM(LEFT_A, 50)
@@ -49,11 +44,7 @@ left_b.start(0)
 right_a.start(0) 
 right_b.start(0)
 
-#left_a.ChangeDutyCycle(0)
-
 GPIO.output(HEADLIGHTS_1, GPIO.LOW)
-
-#GPIO.output(HEADLIGHTS_2, GPIO.LOW) # Main power line
 
 class Direction(Enum):
     FORWARD = 1
@@ -72,7 +63,6 @@ class UDPRobotControl:
         self.headlight_state = False
         self.last_packet = int(round(time.time() * 1000))
         self.timed_out = False
-        #self.ser = serial.Serial(port='/dev/ttyUSB0', baudrate=9600)
 
         # Start up the server thread
         self.server_thread = Thread(target = self.UdpServerThread)
@@ -91,10 +81,10 @@ class UDPRobotControl:
             left_turn_vector = abs(set_turn)
             if set_forward < 0.0:
                 left_turn_vector *= -1.0
-            elif set_turn > 0.0:
-                right_turn_vector = set_turn
-                if set_forward < 0.0:
-                    right_turn_vector *= -1.0
+        if set_turn > 0.0:
+            right_turn_vector = set_turn
+            if set_forward < 0.0:
+                right_turn_vector *= -1.0
 
         left_throttle = 0x00 | int((set_forward * 100.0) - (left_turn_vector * 100.0))
         right_throttle = 0x00 | int((set_forward * 100.0) - (right_turn_vector * 100.0))
@@ -114,31 +104,9 @@ class UDPRobotControl:
 
     def headlights(self):
         if self.headlight_state:
-            GPIO.output(HEADLIGHTS_1, GPIO.LOW)
-            self.headlight_state = False
-        else:
             GPIO.output(HEADLIGHTS_1, GPIO.HIGH)
-            self.headlight_state = True
-
-    def change_movement(self, input):
-        moveForwardRev = False
-        forward_throttle = 0.0
-        steering_angle = 0.0
-        if input == Direction.FORWARD:
-            forward_throttle = 0.8
-        elif input == Direction.REVERSE:
-            forward_throttle = -0.8
-        elif input == Direction.STOP:
-            forward_throttle = 0.0
-            #print("Stop")
-        elif input == Direction.CENTER:
-            steering_angle = 0.0
-        if input == Direction.LEFT:
-            steering_angle = 0.8
-        elif input == Direction.RIGHT:
-            steering_angle = -0.8
-
-        self.set_throttle(forward_throttle, steering_angle)
+        else:
+            GPIO.output(HEADLIGHTS_1, GPIO.LOW)
 
     # Monitors the control system; checking for timeouts
     def CheckCOMTimeout(self):
@@ -147,8 +115,7 @@ class UDPRobotControl:
             delta_t = int(round(time.time() * 1000)) - self.last_packet
             if delta_t > 1000 and self.timed_out == False:
                 print("Got no communication for 1 second")
-                self.change_movement(Direction.STOP)
-                self.change_movement(Direction.CENTER)
+                self.set_throttle(0.0, 0.0)
                 self.timed_out = True
             elif delta_t < 1000 and self.timed_out:
                 print("Communication resumed")
@@ -170,33 +137,21 @@ class UDPRobotControl:
             # Ensure we have a valid control code
             if data[0] == 81 and data[1] == 12:
                 self.last_packet = int(round(time.time() * 1000))
-                if (data[2] == 1):
-                    self.change_movement(Direction.FORWARD)
-                elif (data[2] == 2):
-                    self.change_movement(Direction.STOP)
-                elif (data[2] == 3):
-                    self.change_movement(Direction.REVERSE)
-                elif (data[2] == 4):
-                    self.change_movement(Direction.STOP)
-                elif (data[2] == 5):
-                    self.change_movement(Direction.CENTER)
-                elif (data[2] == 6):
-                    self.change_movement(Direction.LEFT)
-                elif (data[2] == 7):
-                    self.change_movement(Direction.RIGHT)
-                elif (data[2] == 8):
-                    self.change_movement(7)
-                elif (data[2] == 9):
-                    self.change_movement(8)
-                elif (data[3] == 1):
-                    GPIO.output(HEADLIGHTS_1, GPIO.HIGH)
+                xThrottle = float(data[2]) / 100.0
+                yThrottle = float(data[4]) / 100.0
+                if data[3] == 1:
+                    xThrottle *= -1.0
+                if data[5] == 1:
+                    yThrottle *= -1.0
+                if data[6] == 1 and self.headlight_state != True:
                     self.headlight_state = True
-                elif (data[3] == 0):
-                    GPIO.output(HEADLIGHTS_1, GPIO.LOW)
+                    self.headlights()
+                elif data[6] == 0 and self.headlight_state != False:
                     self.headlight_state = False
-                else:
-                    print("No cmd: ")
-                    print(data)
+                    self.headlights()
+                forward_throttle = yThrottle
+                steering_throttle = xThrottle
+                self.set_throttle(forward_throttle, steering_throttle)
 
 if __name__ == "__main__":
     ctrl = UDPRobotControl()
