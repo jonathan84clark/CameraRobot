@@ -16,11 +16,11 @@ from enum import Enum
 from distance_sensors import DistanceSensors
 
 LEFT_A = 19
-LEFT_B = 13
-RIGHT_A = 18
+LEFT_B = 18
+RIGHT_A = 13
 RIGHT_B = 12
 HEADLIGHTS_1 = 25
-HEADLIGHTS_1 = 25
+HEADLIGHTS_1 = 25 
 
 # Setup the GPIO pins
 GPIO.setwarnings(False) # Disable unused warnings
@@ -32,14 +32,14 @@ GPIO.setup(RIGHT_B, GPIO.OUT) # Main power line
 GPIO.setup(HEADLIGHTS_1, GPIO.OUT) # Main power line
 
 # Clear all relays
-left_a = GPIO.PWM(LEFT_A, 50)
-left_b = GPIO.PWM(LEFT_B, 50)
+#left_a = GPIO.PWM(LEFT_A, 50)
+#left_b = GPIO.PWM(LEFT_B, 50)
 
 right_a = GPIO.PWM(RIGHT_A, 50)
 right_b = GPIO.PWM(RIGHT_B, 50)
 
-left_a.start(0) 
-left_b.start(0)
+#left_a.start(0) 
+#left_b.start(0)
 
 right_a.start(0) 
 right_b.start(0)
@@ -58,20 +58,25 @@ class UDPRobotControl:
     def __init__(self):
         self.throttle = 0.0
         self.steering = 0.0
+    
+        GPIO.output(HEADLIGHTS_1, GPIO.LOW)
+        #GPIO.output(RIGHT_B, GPIO.LOW)
+        #right_a.ChangeDutyCycle(50.0)
+        #right_b.ChangeDutyCycle(0)
         #self.dist_sensors = distance_ref
         print("UDP Robot Control listening")
-        self.headlight_state = False
-        self.last_packet = int(round(time.time() * 1000))
-        self.timed_out = False
+        #self.headlight_state = False
+        #self.last_packet = int(round(time.time() * 1000))
+        #self.timed_out = False
 
         # Start up the server thread
-        self.server_thread = Thread(target = self.UdpServerThread)
-        self.server_thread.daemon = True
-        self.server_thread.start()
+        #self.server_thread = Thread(target = self.UdpServerThread)
+        #self.server_thread.daemon = True
+        #self.server_thread.start()
 
-        self.com_thread = Thread(target = self.CheckCOMTimeout)
-        self.com_thread.daemon = True
-        self.com_thread.start()
+        #self.com_thread = Thread(target = self.CheckCOMTimeout)
+        #self.com_thread.daemon = True
+        #self.com_thread.start()
 
     # Handles communication with the main motor
     def set_throttle(self, set_forward, set_turn):

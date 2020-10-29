@@ -137,13 +137,13 @@ def runServer(server_class=HTTPServer, handler_class=S, port=5000):
 
 if __name__ == "__main__":
 	# Start up the server thread
-    thread = Thread(target = runServer)
-    thread.daemon = True
-    thread.start()
+    #thread = Thread(target = runServer)
+    #thread.daemon = True
+    #thread.start()
 
-    subprocess.call('python3 /home/pi/CameraRobot/rpi_camera.py &', shell=True)
+    #subprocess.call('python3 /home/pi/CameraRobot/rpi_camera.py &', shell=True)
     udpControl = UDPRobotControl()
-    distanceSensors = DistanceSensors()
+    #distanceSensors = DistanceSensors()
 
     while (True):
         time.sleep(1)
