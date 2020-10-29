@@ -14,104 +14,37 @@ import datetime
 import RPi.GPIO as GPIO
 from enum import Enum
 from distance_sensors import DistanceSensors
+from Drive import DriveSystem
 
-LEFT_A = 19
-LEFT_B = 18
-RIGHT_A = 13
-RIGHT_B = 12
-HEADLIGHTS_1 = 25
-HEADLIGHTS_1 = 25 
+STEER_A = 19
+STEER_B = 18
+MAIN_A = 12
+MAIN_B = 13
+HEADLIGHTS = 25
 
 # Setup the GPIO pins
 GPIO.setwarnings(False) # Disable unused warnings
 GPIO.setmode(GPIO.BCM) # Broadcom pin-numbering scheme
-GPIO.setup(LEFT_A, GPIO.OUT) # Heater Pin
-GPIO.setup(LEFT_B, GPIO.OUT) # Fan Pin
-GPIO.setup(RIGHT_A, GPIO.OUT) # AC Pin
-GPIO.setup(RIGHT_B, GPIO.OUT) # Main power line
-GPIO.setup(HEADLIGHTS_1, GPIO.OUT) # Main power line
-
-# Clear all relays
-#left_a = GPIO.PWM(LEFT_A, 50)
-#left_b = GPIO.PWM(LEFT_B, 50)
-
-right_a = GPIO.PWM(RIGHT_A, 50)
-right_b = GPIO.PWM(RIGHT_B, 50)
-
-#left_a.start(0) 
-#left_b.start(0)
-
-right_a.start(0) 
-right_b.start(0)
-
-GPIO.output(HEADLIGHTS_1, GPIO.LOW)
-
-class Direction(Enum):
-    FORWARD = 1
-    REVERSE = 2
-    STOP = 3
-    LEFT = 4
-    RIGHT = 5
-    CENTER = 6
 
 class UDPRobotControl:
     def __init__(self):
-        self.throttle = 0.0
-        self.steering = 0.0
-    
-        GPIO.output(HEADLIGHTS_1, GPIO.LOW)
-        #GPIO.output(RIGHT_B, GPIO.LOW)
-        #right_a.ChangeDutyCycle(50.0)
-        #right_b.ChangeDutyCycle(0)
+        self.drive = DriveSystem(MAIN_A, MAIN_B, STEER_A, STEER_B, HEADLIGHTS, 1000)
+        self.drive.manual_control(0.0, 0.0)
+
         #self.dist_sensors = distance_ref
         print("UDP Robot Control listening")
-        #self.headlight_state = False
-        #self.last_packet = int(round(time.time() * 1000))
-        #self.timed_out = False
+        self.headlight_state = False
+        self.last_packet = int(round(time.time() * 1000))
+        self.timed_out = False
 
         # Start up the server thread
-        #self.server_thread = Thread(target = self.UdpServerThread)
-        #self.server_thread.daemon = True
-        #self.server_thread.start()
+        self.server_thread = Thread(target = self.UdpServerThread)
+        self.server_thread.daemon = True
+        self.server_thread.start()
 
-        #self.com_thread = Thread(target = self.CheckCOMTimeout)
-        #self.com_thread.daemon = True
-        #self.com_thread.start()
-
-    # Handles communication with the main motor
-    def set_throttle(self, set_forward, set_turn):
-        left_turn_vector = 0.0
-        right_turn_vector = 0.0
-        if set_turn < 0.0:
-            left_turn_vector = abs(set_turn)
-            if set_forward < 0.0:
-                left_turn_vector *= -1.0
-        if set_turn > 0.0:
-            right_turn_vector = set_turn
-            if set_forward < 0.0:
-                right_turn_vector *= -1.0
-
-        left_throttle = 0x00 | int((set_forward * 100.0) - (left_turn_vector * 100.0))
-        right_throttle = 0x00 | int((set_forward * 100.0) - (right_turn_vector * 100.0))
-        if right_throttle >= 0.0:
-            right_a.ChangeDutyCycle(right_throttle)
-            right_b.ChangeDutyCycle(0)
-        elif right_throttle < 0.0:
-            right_a.ChangeDutyCycle(0)
-            right_b.ChangeDutyCycle(abs(right_throttle))
-
-        if left_throttle >= 0.0:
-            left_a.ChangeDutyCycle(left_throttle)
-            left_b.ChangeDutyCycle(0)
-        elif left_throttle < 0.0:
-            left_a.ChangeDutyCycle(0)
-            left_b.ChangeDutyCycle(abs(left_throttle))
-
-    def headlights(self):
-        if self.headlight_state:
-            GPIO.output(HEADLIGHTS_1, GPIO.HIGH)
-        else:
-            GPIO.output(HEADLIGHTS_1, GPIO.LOW)
+        self.com_thread = Thread(target = self.CheckCOMTimeout)
+        self.com_thread.daemon = True
+        self.com_thread.start()
 
     # Monitors the control system; checking for timeouts
     def CheckCOMTimeout(self):
@@ -120,7 +53,7 @@ class UDPRobotControl:
             delta_t = int(round(time.time() * 1000)) - self.last_packet
             if delta_t > 1000 and self.timed_out == False:
                 print("Got no communication for 1 second")
-                self.set_throttle(0.0, 0.0)
+                self.drive.manual_control(0.0, 0.0)
                 self.timed_out = True
             elif delta_t < 1000 and self.timed_out:
                 print("Communication resumed")
@@ -129,7 +62,7 @@ class UDPRobotControl:
 
     # Handles recieving UDP timeouts
     def UdpServerThread(self):
-        UDP_IP_ADDRESS = "192.168.1.14"
+        UDP_IP_ADDRESS = "192.168.1.19"
         UDP_PORT_NO = 6789
 
         msg = [0, 0, 0, 0, 0, 0, 0, 0]
@@ -150,13 +83,13 @@ class UDPRobotControl:
                     yThrottle *= -1.0
                 if data[6] == 1 and self.headlight_state != True:
                     self.headlight_state = True
-                    self.headlights()
+                    self.drive.set_headlights(True)
                 elif data[6] == 0 and self.headlight_state != False:
                     self.headlight_state = False
-                    self.headlights()
+                    self.drive.set_headlights(False)
                 forward_throttle = yThrottle
                 steering_throttle = xThrottle
-                self.set_throttle(forward_throttle, steering_throttle)
+                self.drive.manual_control(forward_throttle, steering_throttle)
 
 if __name__ == "__main__":
     ctrl = UDPRobotControl()
