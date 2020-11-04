@@ -11,7 +11,7 @@ from threading import Thread
 
 class GPSDriver:
     def __init__(self):
-        self.ser = serial.Serial('COM4')
+        self.ser = serial.Serial('/dev/serial0')
         self.time = ""
         self.latitude = 0.0
         self.gps_fix = 0
@@ -54,6 +54,7 @@ class GPSDriver:
         self.num_sats = int(splitMessage[7])
         self.hdop = float(splitMessage[8])
         self.altitude = float(splitMessage[9]) * 3.28084
+        print(self.latitude)
        
     # Process the GPVTG message  
     def ProcessGPVTG(self, splitMessage):
@@ -93,7 +94,7 @@ class GPSDriver:
             elif splitMessages[0] == '$GPGSA':
                 self.ProcessGPGSA(splitMessages)
             else:
-                print(splitMessages[0])
+                pass #print(splitMessages[0])
 
 if __name__ == "__main__":
     ctrl = GPSDriver()
