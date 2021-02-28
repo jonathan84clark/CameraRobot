@@ -16,20 +16,14 @@ from enum import Enum
 from distance_sensors import DistanceSensors
 from Drive import DriveSystem
 
-STEER_A = 19
-STEER_B = 18
-MAIN_A = 12
-MAIN_B = 13
-HEADLIGHTS = 25
-
 # Setup the GPIO pins
 GPIO.setwarnings(False) # Disable unused warnings
 GPIO.setmode(GPIO.BCM) # Broadcom pin-numbering scheme
 
 class UDPRobotControl:
     def __init__(self):
-        self.drive = DriveSystem(MAIN_A, MAIN_B, STEER_A, STEER_B, HEADLIGHTS, 1000)
-        self.drive.manual_control(0.0, 0.0)
+        self.drive = DriveSystem(1000)
+        self.drive.manual_control(0.0, 0.0, 0.0)
 
         #self.dist_sensors = distance_ref
         print("UDP Robot Control listening")
@@ -53,7 +47,7 @@ class UDPRobotControl:
             delta_t = int(round(time.time() * 1000)) - self.last_packet
             if delta_t > 1000 and self.timed_out == False:
                 print("Got no communication for 1 second")
-                self.drive.manual_control(0.0, 0.0)
+                self.drive.manual_control(0.0, 0.0, 0.0)
                 self.timed_out = True
             elif delta_t < 1000 and self.timed_out:
                 print("Communication resumed")
@@ -89,7 +83,7 @@ class UDPRobotControl:
                     self.drive.set_headlights(False)
                 forward_throttle = yThrottle
                 steering_throttle = xThrottle
-                self.drive.manual_control(forward_throttle, steering_throttle)
+                self.drive.manual_control(forward_throttle, 0.0, steering_throttle)
 
 if __name__ == "__main__":
     ctrl = UDPRobotControl()

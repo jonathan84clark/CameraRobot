@@ -24,6 +24,11 @@ class Motor:
 
     # Takes a throttle value between -1.0 <= 0 <= 1.0
     def set_throttle(self, throttle):
+        if throttle > 1.0:
+            throttle = 1.0
+        elif throttle < -1.0:
+            throttle = -1.0
+            
         if throttle >= 0.0:
             self.motor_a.ChangeDutyCycle(throttle * 100.0)
             self.motor_b.ChangeDutyCycle(0)

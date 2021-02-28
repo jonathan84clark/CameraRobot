@@ -44,24 +44,26 @@ class GPSDriver:
     
     # Processes the GPGGA message
     def ProcessGPGGA(self, splitMessage):
+        print(splitMessage)
         time_stamp = splitMessage[1][0] + splitMessage[1][1] + ":"
         time_stamp += splitMessage[1][2] + splitMessage[1][3] + ":"
         time_stamp += splitMessage[1][3] + splitMessage[1][4]
-        self.time = time_stamp
-        self.latitude = self.ProcessGPSString(splitMessage[2], splitMessage[3])
-        self.longitude = self.ProcessGPSString(splitMessage[4], splitMessage[5])
-        self.gps_fix = int(splitMessage[6])
-        self.num_sats = int(splitMessage[7])
-        self.hdop = float(splitMessage[8])
-        self.altitude = float(splitMessage[9]) * 3.28084
-        print(self.latitude)
+        #self.time = time_stamp
+        #self.latitude = self.ProcessGPSString(splitMessage[2], splitMessage[3])
+        #self.longitude = self.ProcessGPSString(splitMessage[4], splitMessage[5])
+        #self.gps_fix = int(splitMessage[6])
+        #self.num_sats = int(splitMessage[7])
+        #self.hdop = float(splitMessage[8])
+        #self.altitude = float(splitMessage[9]) * 3.28084
+        #print(self.latitude)
        
     # Process the GPVTG message  
     def ProcessGPVTG(self, splitMessage):
+        print(splitMessage)
         #self.track_made_good = float(splitMessage[1])
         #self.magnetic_track_good = float(splitMessage[3])
-        self.ground_speed_knots = float(splitMessage[5])
-        self.ground_speed_kmh = float(splitMessage[7])
+        #self.ground_speed_knots = float(splitMessage[5])
+        #self.ground_speed_kmh = float(splitMessage[7])
 
     # Proces the GPRMC message
     def ProcessGPRMC(self, splitMessage):
