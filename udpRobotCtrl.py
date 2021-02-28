@@ -59,7 +59,7 @@ class UDPRobotControl:
         UDP_IP_ADDRESS = "192.168.1.19"
         UDP_PORT_NO = 6789
 
-        msg = [0, 0, 0, 0, 0, 0, 0, 0]
+        msg = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         data = bytearray(msg)
         serverSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         serverSock.bind((UDP_IP_ADDRESS, UDP_PORT_NO))
@@ -71,19 +71,22 @@ class UDPRobotControl:
                 self.last_packet = int(round(time.time() * 1000))
                 xThrottle = float(data[2]) / 100.0
                 yThrottle = float(data[4]) / 100.0
+                slideThrottle = float(data[6]) / 100.0
                 if data[3] == 1:
                     xThrottle *= -1.0
                 if data[5] == 1:
                     yThrottle *= -1.0
-                if data[6] == 1 and self.headlight_state != True:
+                if data[7] == 1:
+                    slideThrottle *= -1.0
+                if data[8] == 1 and self.headlight_state != True:
                     self.headlight_state = True
                     self.drive.set_headlights(True)
-                elif data[6] == 0 and self.headlight_state != False:
+                elif data[8] == 0 and self.headlight_state != False:
                     self.headlight_state = False
                     self.drive.set_headlights(False)
                 forward_throttle = yThrottle
                 steering_throttle = xThrottle
-                self.drive.manual_control(forward_throttle, 0.0, steering_throttle)
+                self.drive.manual_control(forward_throttle, steering_throttle, slideThrottle)
 
 if __name__ == "__main__":
     ctrl = UDPRobotControl()
